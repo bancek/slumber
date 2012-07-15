@@ -98,7 +98,12 @@ class Resource(ResourceAttributesMixin, object):
         if self._store["append_slash"] and not url.endswith("/"):
             url = url + "/"
 
-        resp = self._store["session"].request(method, url, data=data, params=params, headers={"content-type": s.get_content_type(), "accept": s.get_content_type()})
+        headers = {"accept": s.get_content_type()}
+
+        if data is not None:
+            headers["content-type"] = s.get_content_type()
+
+        resp = self._store["session"].request(method, url, data=data, params=params, headers=headers)
 
         if 400 <= resp.status_code <= 499:
             raise exceptions.HttpClientError("Client Error %s: %s" % (resp.status_code, url), response=resp, content=resp.content)
@@ -126,7 +131,11 @@ class Resource(ResourceAttributesMixin, object):
         if 200 <= resp.status_code <= 299:
             if resp.status_code == 201:
                 # @@@ Hacky, see description in __call__
-                resource_obj = self(url_override=resp.headers["location"])
+                location = resp.headers["location"]
+                if location.startswith("/"):
+                    resource_obj = self(id=location)
+                else:
+                    resource_obj = self(url_override=location)
                 return resource_obj.get(params=kwargs)
             else:
                 return resp.content
