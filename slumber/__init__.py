@@ -138,7 +138,9 @@ class Resource(ResourceAttributesMixin, object):
                     resource_obj = self(url_override=location)
                 return resource_obj.get(params=kwargs)
             else:
-                return resp.content
+                s = self.get_serializer()
+                
+                return s.loads(resp.content)
         else:
             # @@@ Need to be Some sort of Error Here or Something
             return
