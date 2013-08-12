@@ -129,9 +129,9 @@ class Resource(ResourceAttributesMixin, object):
 
         resp = self._request("POST", data=s.dumps(data), params=kwargs)
         if 200 <= resp.status_code <= 299:
-            if resp.status_code == 201:
+            location = resp.headers.get("location")
+            if resp.status_code == 201 and location is not None:
                 # @@@ Hacky, see description in __call__
-                location = resp.headers["location"]
                 if location.startswith("/"):
                     resource_obj = self(id=location)
                 else:
